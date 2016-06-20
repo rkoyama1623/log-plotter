@@ -90,3 +90,5 @@ ENV/
 
 # Emacs
 *~
+
+jaxon_test_data/
