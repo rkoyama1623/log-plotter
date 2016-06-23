@@ -338,7 +338,7 @@ class DataloggerLogParser:
         self.setLabel()
         self.linkAxes()
         self.customMenu()
-        self.view.showMaximized()
+        # self.view.showMaximized()
 
 if __name__ == '__main__':
     # args
@@ -356,4 +356,4 @@ if __name__ == '__main__':
     layoutName="config/robot/jaxon/test-layout.yaml"
     a = DataloggerLogParser(fileName, plotName, layoutName, args.t)
     a.main()
-    pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
+    # pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
