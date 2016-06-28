@@ -362,6 +362,7 @@ if __name__ == '__main__':
     parser.add_argument('--plot', type=str, help='plot configure file', metavar='file', required=False)
     parser.add_argument('--layout', type=str, help='layout configure file', metavar='file', required=False)
     parser.add_argument('-t', type=str, help='title', default=None)
+    parser.add_argument('--debug', type=str, help='debug-mode', default="True")
     parser.set_defaults(feature=False)
     args = parser.parse_args()
     # main
@@ -371,4 +372,5 @@ if __name__ == '__main__':
     layoutName="config/robot/jaxon/test-layout.yaml"
     a = DataloggerLogParser(fileName, plotName, layoutName, args.t)
     a.main()
-    # pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
+    if args.f != None:
+        pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
