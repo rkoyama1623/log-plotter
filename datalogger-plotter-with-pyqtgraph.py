@@ -345,14 +345,17 @@ class DataloggerLogParser:
 if __name__ == '__main__':
     # args
     parser = argparse.ArgumentParser(description='plot data from hrpsys log')
-    parser.add_argument('-f', type=str, help='input file', metavar='file', required=True)
-    parser.add_argument('--plot', type=str, help='plot configure file', metavar='file', required=True)
-    parser.add_argument('--layout', type=str, help='layout configure file', metavar='file', required=True)
+    # parser.add_argument('-f', type=str, help='input file', metavar='file', required=True)
+    # parser.add_argument('--plot', type=str, help='plot configure file', metavar='file', required=True)
+    # parser.add_argument('--layout', type=str, help='layout configure file', metavar='file', required=True)
     parser.add_argument('-t', type=str, help='title', default=None)
     parser.set_defaults(feature=False)
     args = parser.parse_args()
     # main
     app = pyqtgraph.Qt.QtGui.QApplication([])
-    a = DataloggerLogParser(args.f, args.plot, args.layout, args.t)
+    fileName="jaxon_test_data/skate-log_JAXON_20151216220552"
+    plotName="config/robot/jaxon/test.yaml"
+    layoutName="config/robot/jaxon/test-layout.yaml"
+    a = DataloggerLogParser(fileName, plotName, layoutName, args.t)
     a.main()
     pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
