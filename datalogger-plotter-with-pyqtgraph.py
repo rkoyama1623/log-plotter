@@ -68,8 +68,8 @@ class DataloggerLogParser:
         #                                         ...,
         #                                         [t_n, x_n, y_n, ...]])
         '''
-        logs_list_list = [plot_conf[1]["log"] for plot_conf in self.plot_dict.items()]#[ [log1], [log1], [log2], [log2], [log1, log2] ]
-        duplicated_list = [log for logs_list in logs_list_list for logs in logs_list for log in logs ] # [ log1, log1, log2, log2, log1, log2 ]
+        logs_list_list = [plot_conf[1]["log"] for plot_conf in self.plot_dict.items()]
+        duplicated_list = [log for logs_list in logs_list_list for logs in logs_list for log in logs ]
         topic_list = list(set(duplicated_list))
         # store data in parallel
         fname_list = [self.fname+'.'+ext for ext in topic_list]
@@ -338,22 +338,19 @@ class DataloggerLogParser:
         self.setLabel()
         self.linkAxes()
         self.customMenu()
-        # self.view.showMaximized()
+        self.view.showMaximized()
 
 if __name__ == '__main__':
     # args
     parser = argparse.ArgumentParser(description='plot data from hrpsys log')
-    # parser.add_argument('-f', type=str, help='input file', metavar='file', required=True)
-    # parser.add_argument('--plot', type=str, help='plot configure file', metavar='file', required=True)
-    # parser.add_argument('--layout', type=str, help='layout configure file', metavar='file', required=True)
+    parser.add_argument('-f', type=str, help='input file', metavar='file', required=True)
+    parser.add_argument('--plot', type=str, help='plot configure file', metavar='file', required=True)
+    parser.add_argument('--layout', type=str, help='layout configure file', metavar='file', required=True)
     parser.add_argument('-t', type=str, help='title', default=None)
     parser.set_defaults(feature=False)
     args = parser.parse_args()
     # main
     app = pyqtgraph.Qt.QtGui.QApplication([])
-    fileName="jaxon_test_data/skate-log_JAXON_20151216220552"
-    plotName="config/robot/jaxon/test.yaml"
-    layoutName="config/robot/jaxon/test-layout.yaml"
-    a = DataloggerLogParser(fileName, plotName, layoutName, args.t)
+    a = DataloggerLogParser(args.f, args.plot, args.layout, args.t)
     a.main()
-    # pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
+    pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
