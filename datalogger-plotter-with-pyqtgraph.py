@@ -358,9 +358,9 @@ class DataloggerLogParser:
 if __name__ == '__main__':
     # args
     parser = argparse.ArgumentParser(description='plot data from hrpsys log')
-    # parser.add_argument('-f', type=str, help='input file', metavar='file', required=True)
-    # parser.add_argument('--plot', type=str, help='plot configure file', metavar='file', required=True)
-    # parser.add_argument('--layout', type=str, help='layout configure file', metavar='file', required=True)
+    parser.add_argument('-f', type=str, help='input file', metavar='file', required=False)
+    parser.add_argument('--plot', type=str, help='plot configure file', metavar='file', required=False)
+    parser.add_argument('--layout', type=str, help='layout configure file', metavar='file', required=False)
     parser.add_argument('-t', type=str, help='title', default=None)
     parser.set_defaults(feature=False)
     args = parser.parse_args()
