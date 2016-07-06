@@ -12,6 +12,11 @@
   "log": [['sh_rfsensorOut'], ['RobotHardware0_rfsensor'], ['rmfo_off_rfsensor']]
   "arg_index": [[0], [0], [0]]
 
+"left_foot_force":
+  "log": [['sh_lfsensorOut'], ['RobotHardware0_lfsensor'], ['rmfo_off_lfsensor']]
+  "arg_index": [[0], [0], [0]]
+
+
 "current":
   "log": [['RobotHardware0_servoState']]
   "func": ['plot_current']

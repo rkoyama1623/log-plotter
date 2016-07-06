@@ -353,7 +353,19 @@ class DataloggerLogParser:
         self.setLabel()
         self.linkAxes()
         self.customMenu()
-        self.view.showMaximized()
+        # self.view.showMaximized()
+
+def getAve(name):
+    #data=a.dataListDict['rmfo_off_rfsensor']
+    data=a.dataListDict[name]
+    fz=data[:,3]
+    tmStart=3.5
+    tmStop=4.0
+    # print fz[500*tmStart:tmStop*500]
+    averageVal=numpy.average(fz[500*tmStart:tmStop*500])
+    return averageVal
+    
+
 
 if __name__ == '__main__':
     # args
@@ -367,10 +379,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # main
     app = pyqtgraph.Qt.QtGui.QApplication([])
-    fileName="jaxon_test_data/skate-log_JAXON_20151216220552"
+    # fileName="/home/leus/Desktop/kojio/2016-07-06_water_experiment/log_trim/ver12_get_lforce_depth_70_walking_3_JAXON_RED_20160706232602"
+    fileName=args.f
     plotName="config/robot/jaxon/test.yaml"
     layoutName="config/robot/jaxon/test-layout.yaml"
     a = DataloggerLogParser(fileName, plotName, layoutName, args.t)
     a.main()
-    if args.f != None:
-        pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
+    # if args.f != None:
+    #     pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
+
+    print 'rmfo_off_rfsensor:',getAve('rmfo_off_rfsensor')
+    print 'rmfo_off_lfsensor:',getAve('rmfo_off_lfsensor')
+
+
+
+
