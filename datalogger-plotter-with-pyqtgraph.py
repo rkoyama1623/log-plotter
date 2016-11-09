@@ -14,6 +14,7 @@ import plot_method
 import re
 import copy
 from graph_tree import *
+from graph_interface import *
 
 try:
     import pyqtgraph
@@ -53,9 +54,9 @@ class DataloggerLogParser:
         with open(layout_conf_name, "r") as f:
             self.layout_list = yaml.load(f)
         # setup view
-        self.view = pyqtgraph.GraphicsLayoutWidget()
-        self.view.setBackground('w')
-        self.view.setWindowTitle(title if title else fname.split('/')[-1])
+        # self.view = pyqtgraph.GraphicsLayoutWidget()
+        # self.view.setBackground('w')
+        # self.view.setWindowTitle(title if title else fname.split('/')[-1])
         # self.dateListDict is set by self.readData()
         self.dataListDict = {}# todo: to list of dictionary
         # back up for plot items
@@ -178,24 +179,24 @@ class DataloggerLogParser:
         set layout of view according to self.plot_dict
         '''
         self.graph_tree = GraphGroupTree(self.layout_list, self.plot_dict)
-        # set graphItem
-        for col_num in RowColInterface.layout:
-            for j in range(col_num):
-                self.view.addPlot()
-            self.view.nextRow()
+        self.view = matplotlibGraphLayout(RowColInterface.layout)
+        # # set graphItem
+        # for col_num in RowColInterface.layout:
+        #     for j in range(col_num):
+        #         self.view.addPlot()
+        #     self.view.nextRow()
         # set grid
-        for plot_item in a.view.ci.items.keys():
-            plot_item.showGrid(x=True, y=True)
-            # we should call addLegend once a plot item
-            plot_item.addLegend(offset=(0, 0))
-        # set tile
+        for plot_item in a.view:
+            plot_item.grid(True, axis = 'both')
+            plot_item.legend()
+            # set tile
         for graph_group in self.graph_tree:
             for graph in graph_group:
                 row = graph.row()
                 col = graph.col()
                 title = graph.name
-                plot_item = a.view.ci.rows[row][col]
-                plot_item.setTitle(title)
+                plot_item = a.view[row][col]
+                plot_item.set_title(title)
 
     @my_time
     def plotData(self):
@@ -215,7 +216,7 @@ class DataloggerLogParser:
                 for legend in graph:
                     row = graph.row()
                     col = graph.col()
-                    plot_item = a.view.ci.rows[row][col] # canvas to draw
+                    plot_item = a.view[row][col]         # canvas to draw
                     func = legend.how_to_plot['func']    # function in plot_method (ex. 'plot_watt')
                     logs = legend.how_to_plot['log']     # list of log (ex. ['RobotHardware0_dq', 'RobotHardware0_tau'])
                     log_cols = legend.how_to_plot['index']   # columns in log (ex. [0, 0])
@@ -228,10 +229,10 @@ class DataloggerLogParser:
         '''
         set label: time for bottom plots, unit for left plots
         '''
-        row_num = len(self.view.ci.rows)
+        row_num = len(self.view)
         # left plot items
         for i in range(row_num):
-            cur_item = self.view.ci.rows[i][0]
+            cur_item = self.view[i][0]
             title = cur_item.titleLabel.text
             tmp_units = None
             if ("12V" in title) or ("80V" in title):
@@ -252,9 +253,9 @@ class DataloggerLogParser:
                 ax['item'].labelUnitPrefix = ''
                 ax['item'].setLabel()
         # bottom plot items
-        col_num = len(self.view.ci.rows[row_num-1])
+        col_num = len(self.view[row_num-1])
         for i in range(col_num):
-            cur_item = self.view.ci.rows[row_num-1][i]
+            cur_item = self.view[row_num-1][i]
             cur_item.setLabel("bottom", text="time", units="s")
 
     @my_time
@@ -263,8 +264,7 @@ class DataloggerLogParser:
         link all X axes and some Y axes
         '''
         # X axis
-        all_items = self.view.ci.items.keys()
-        target_item = all_items[0]
+        all_items = self.view._target
         for i, p in enumerate(all_items):
             if i != 0:
                 p.setXLink(target_item)
@@ -365,9 +365,9 @@ class DataloggerLogParser:
         self.readData()
         self.setLayout()
         self.plotData()
-        self.setLabel()
-        self.linkAxes()
-        self.customMenu()
+        # self.setLabel()
+        # self.linkAxes()
+        # self.customMenu()
         self.view.showMaximized()
 
 if __name__ == '__main__':
@@ -384,3 +384,4 @@ if __name__ == '__main__':
     a = DataloggerLogParser(args.f, args.plot, args.layout, args.t)
     a.main()
     pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
+
