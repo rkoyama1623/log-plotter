@@ -13,17 +13,23 @@ from PyQt4 import QtGui
 
 class GraphAxisBase(object):
     def __init__(self, axis_item):
-        self._target = axis_item
-    #    self.load_item()
-    # def load_item(self):
-    #     self.__dict__.update(self.__target.__dict__)
-    # def update_item(self):
-    #     self.__target.__dict__.update(self.__dict__)
+        object.__setattr__(self, '__wrapped', axis_item)
     def plot(self,x,y,*args,**kwargs):
         pass
     def __getattr__(self, name):
-        return getattr(self._target, name)
-
+        if name == '_GraphAxisBase__wrapped':
+            return self.__getattribute__('__wrapped')
+        elif hasattr(self.__wrapped, name):
+            return getattr(self.__wrapped, name)
+        else:
+            return self.__getattribute__(name)
+    def __setattr__(self, name, val):
+        if hasattr(self.__wrapped, name):
+            self.__wrapped.__setattr__(name, val)
+        else:
+            object.__setattr__(self, name, val)
+    def origin(self):
+        return self.__wrapped
 
 class PyQtGraphAxis(GraphAxisBase):
     def __init__(self, *args):
@@ -86,7 +92,7 @@ class PyQtGraphAxis(GraphAxisBase):
             style_dict.update(self.format_str_to_dict(args[2]))
         style_dict_pyqt = self.matplotlib2pyqt(style_dict)
         qpen = self.package.mkPen(style_dict_pyqt['color'], width=style_dict_pyqt['width'])
-        self.package.graphicsItems.PlotItem.PlotItem.plot(self._target, x, y, pen=qpen, name=style_dict_pyqt["name"])
+        self.package.graphicsItems.PlotItem.PlotItem.plot(self.origin(), x, y, pen=qpen, name=style_dict_pyqt["name"])
 
     def set_title(self, label, *args, **kwargs):
         self.setTitle(label)
@@ -123,7 +129,7 @@ class matplotlibGraphAxis(GraphAxisBase):
         GraphAxisBase.__init__(self, *args)
 
     def plot(self,x,y,*args,**kwargs):
-        return self._target.plot(x,y,*args,**kwargs)
+        return self.origin().plot(x,y,*args,**kwargs)
 
 def graph_axis_factory(item):
     import matplotlib
@@ -244,7 +250,8 @@ class matplotlibGraphLayout(GraphLayoutBase):
             from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
         # make instances
         layout = copy.copy(layout_list)
-        layout.remove(0)
+        if 0 in layout:
+            layout.remove(0)
         max_row_num = len(layout_list)
         max_col_num = max(layout_list)
         self.axes = []
@@ -253,11 +260,7 @@ class matplotlibGraphLayout(GraphLayoutBase):
         self.fig = self.plt.figure()
         for i, col_num in enumerate(layout_list):
             for j in range(col_num):
-                if i == 0 and j == 0:
-                    ax = self.fig.add_subplot( max_row_num, max_col_num, max_col_num * i + j + 1 )
-                    leader = ax
-                else:
-                    ax = self.fig.add_subplot( max_row_num, max_col_num, max_col_num * i + j + 1 , sharex = leader)
+                ax = self.fig.add_subplot( max_row_num, max_col_num, max_col_num * i + j + 1 )
                 wrapped_ax = graph_axis_factory(ax)
                 self.axes[i].append(wrapped_ax)
         self._set_layout_list(self.axes)
@@ -269,13 +272,15 @@ class matplotlibGraphLayout(GraphLayoutBase):
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
         QtGui.QDialog.setLayout(self, layout)
+        self.fig.tight_layout(pad=0.1, w_pad=0.5, h_pad=1.0)
 
     def connect_all_x_axes(self):
         parent = self[0][0]
         grouper = parent.get_shared_x_axes()
         for child in self:
             if child != parent:
-                grouper.join(parent, child)
+                grouper.join(parent.origin(), child.origin())
+            child.set_adjustable('datalim')
 
 def test_layout():
     import sys
@@ -304,14 +309,13 @@ def test_layout():
         ax.set_xlabel("x [ml]")
         ax.set_ylabel("y[ml]")
         ax.grid(True, axis = 'both')
+    graph_layout.connect_all_x_axes()
 
     graph_layout.showMaximized()
     # main_window = QtGui.QMainWindow()
     # main_window.setCentralWidget(graph_layout)
     # main_window.show()
     app.exec_()
-    import IPython
-    IPython.embed()
 
-if __name__=='__main__':
-    test_layout()
+    # import IPython
+    # IPython.embed()
