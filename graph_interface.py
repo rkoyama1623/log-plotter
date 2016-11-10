@@ -41,13 +41,18 @@ class PyQtGraphAxis(GraphAxisBase):
         self.addLegend(offset=(0, 0))
         # set to emulate matplotlib
         self.package.graphicsItems.LegendItem.LegendItem.__call__ = self._legend
+        self.package.graphicsItems.LegendItem.LegendItem.__getattr__ = dummy()
         self.legend.hide()
+        # we need this to suppress si-prefix until https://github.com/pyqtgraph/pyqtgraph/pull/293 is merged
+        for ax in self.axes.values():
+            ax['item'].enableAutoSIPrefix(enable=False)
+            ax['item'].autoSIPrefixScale = 1.0
+            ax['item'].labelUnitPrefix = ''
+            ax['item'].setLabel()
+
     @staticmethod
     def _legend(legend, *args, **kwargs):
-        if legend.isVisible():
-            legend.hide()
-        else:
-            legend.show()
+        legend.show()
         return legend
     @staticmethod
     def format_str_to_dict(format_str):
@@ -97,6 +102,9 @@ class PyQtGraphAxis(GraphAxisBase):
     def set_title(self, label, *args, **kwargs):
         self.setTitle(label)
 
+    def get_title(self, *args, **kwargs):
+        return self.titleLabel.text
+
     def set_xlabel(self, *args, **kwargs):
         text = args[0]
         units = ""
@@ -123,6 +131,23 @@ class PyQtGraphAxis(GraphAxisBase):
         elif axis == 'y':
             y = True and b
         self.showGrid(x=x, y=y)
+
+class dummy(object):
+    def __init__(self, *args, **kwargs):
+        pass
+    def __call__(self, *args, **kwargs):
+        return self
+    def __getitem__(self, key):
+        return self
+    def __getattr__(self, name):
+        return self
+    def __setattr__(self, name, val):
+        pass
+    def __len__(self):
+        return 0
+    def __iter__(self):
+        l = []
+        return l.__iter__()
 
 class matplotlibGraphAxis(GraphAxisBase):
     def __init__(self, *args):
@@ -190,7 +215,7 @@ class GraphLayoutBase(QtGui.QDialog):
         """
         self.__layout = l
 
-    def connect_all_x_axes(self, parent, child):
+    def connect_all_x_axes(self):
         pass
 
     def removeItem(self,i,j):
@@ -209,6 +234,8 @@ class PyQtGraphLayout(GraphLayoutBase):
         self.view.setWindowTitle("sample")
         GraphLayoutBase.__init__(self, *args)
 
+    def origin(self):
+        return self.view
     def setLayout(self, layout_list):
         layout = QtGui.QVBoxLayout()
         for row in layout_list:
@@ -241,6 +268,9 @@ class matplotlibGraphLayout(GraphLayoutBase):
         self.plt = plt
         GraphLayoutBase.__init__(self, *args)
 
+    def origin(self):
+        return self.fig
+
     def setLayout(self, layout_list):
         try:
             from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -252,13 +282,13 @@ class matplotlibGraphLayout(GraphLayoutBase):
         layout = copy.copy(layout_list)
         if 0 in layout:
             layout.remove(0)
-        max_row_num = len(layout_list)
-        max_col_num = max(layout_list)
+        max_row_num = len(layout)
+        max_col_num = max(layout)
         self.axes = []
         for i in range(max_row_num):
             self.axes.append([])
         self.fig = self.plt.figure()
-        for i, col_num in enumerate(layout_list):
+        for i, col_num in enumerate(layout):
             for j in range(col_num):
                 ax = self.fig.add_subplot( max_row_num, max_col_num, max_col_num * i + j + 1 )
                 wrapped_ax = graph_axis_factory(ax)
@@ -272,7 +302,23 @@ class matplotlibGraphLayout(GraphLayoutBase):
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
         QtGui.QDialog.setLayout(self, layout)
-        self.fig.tight_layout(pad=0.1, w_pad=0.5, h_pad=1.0)
+        # set heith and width of each figure
+        self.fig.tight_layout()
+        # leader = self.axes[0][0]
+        # spec = leader.get_subplotspec().get_gridspec()
+        # spec.tight_layout(self.fig)
+        # spec.update()
+        # for row in self.axes:
+        #     for ax in row:
+        #         ss = ax.get_subplotspec()
+        #         gs = ss.get_gridspec()
+        #         gs.bottom = spec.bottom
+        #         gs.top = spec.top
+        #         gs.right = spec.right
+        #         gs.left = spec.left
+        #         gs.hspace = spec.hspace
+        #         gs.wspace = spec.wspace
+        #         gs.update()
 
     def connect_all_x_axes(self):
         parent = self[0][0]
@@ -311,11 +357,12 @@ def test_layout():
         ax.grid(True, axis = 'both')
     graph_layout.connect_all_x_axes()
 
+    # case1
     graph_layout.showMaximized()
+    app.exec_()
+
+    # # case2
     # main_window = QtGui.QMainWindow()
     # main_window.setCentralWidget(graph_layout)
     # main_window.show()
-    app.exec_()
-
-    # import IPython
-    # IPython.embed()
+    # app.exec_()

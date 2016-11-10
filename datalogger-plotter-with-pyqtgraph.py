@@ -47,7 +47,7 @@ def readOneTopic(fname):
     return numpy.array(tmp)
 
 class DataloggerLogParser:
-    def __init__(self, fname, plot_conf_name, layout_conf_name, title):
+    def __init__(self, fname, plot_conf_name, layout_conf_name, title, lib='pyqtgraph'):
         self.fname = fname
         with open(plot_conf_name, "r") as f:
             self.plot_dict = yaml.load(f)
@@ -56,11 +56,14 @@ class DataloggerLogParser:
         # setup view
         # self.view = pyqtgraph.GraphicsLayoutWidget()
         # self.view.setBackground('w')
-        # self.view.setWindowTitle(title if title else fname.split('/')[-1])
+        self.__title = title if title else fname.split('/')[-1] # used in setLayout
+        self.view = None
         # self.dateListDict is set by self.readData()
         self.dataListDict = {}# todo: to list of dictionary
         # back up for plot items
         self.plotItemOrig = {}
+        # library to use
+        self.__lib = lib
 
     def _arange_yaml_before_readData (self):
         '''
@@ -179,7 +182,14 @@ class DataloggerLogParser:
         set layout of view according to self.plot_dict
         '''
         self.graph_tree = GraphGroupTree(self.layout_list, self.plot_dict)
-        self.view = matplotlibGraphLayout(RowColInterface.layout)
+        title = self.__title
+        if self.__lib == 'pyqtgraph':
+            self.view = PyQtGraphLayout(RowColInterface.layout)
+        elif self.__lib == 'matplotlib':
+            self.view = matplotlibGraphLayout(RowColInterface.layout)
+        else:
+            raise Exception('library {} is not valid!'.format(self.__lib))
+        self.view.setWindowTitle(title)
         # # set graphItem
         # for col_num in RowColInterface.layout:
         #     for j in range(col_num):
@@ -188,7 +198,6 @@ class DataloggerLogParser:
         # set grid
         for plot_item in a.view:
             plot_item.grid(True, axis = 'both')
-            plot_item.legend()
             # set tile
         for graph_group in self.graph_tree:
             for graph in graph_group:
@@ -223,6 +232,10 @@ class DataloggerLogParser:
                     i = legend.index                     # if there are three legend in one graph, i = 0 or 1 or 2.
                     key = legend.layout['name']
                     getattr(plot_method.PlotMethod, func) (plot_item, times, data_dict, logs, log_cols, col, key, i)
+                    legend = plot_item.legend(loc = 0, prop={'size': 8}, frameon=True)
+                    if legend:
+                        legend.draggable()
+                        legend.get_frame().set_alpha(0)
 
     @my_time
     def setLabel(self):
@@ -233,7 +246,7 @@ class DataloggerLogParser:
         # left plot items
         for i in range(row_num):
             cur_item = self.view[i][0]
-            title = cur_item.titleLabel.text
+            title = cur_item.get_title()
             tmp_units = None
             if ("12V" in title) or ("80V" in title):
                 tmp_units = "V"
@@ -245,18 +258,13 @@ class DataloggerLogParser:
                 tmp_units = "deg/s"
             elif ("watt" in title):
                 tmp_units = "W"
-            cur_item.setLabel("left", text="", units=tmp_units)
-            # we need this to suppress si-prefix until https://github.com/pyqtgraph/pyqtgraph/pull/293 is merged
-            for ax in cur_item.axes.values():
-                ax['item'].enableAutoSIPrefix(enable=False)
-                ax['item'].autoSIPrefixScale = 1.0
-                ax['item'].labelUnitPrefix = ''
-                ax['item'].setLabel()
+            if tmp_units != None:
+                cur_item.set_ylabel(tmp_units)
         # bottom plot items
         col_num = len(self.view[row_num-1])
         for i in range(col_num):
             cur_item = self.view[row_num-1][i]
-            cur_item.setLabel("bottom", text="time", units="s")
+            cur_item.set_xlabel("time [s]")
 
     @my_time
     def linkAxes(self):
@@ -264,15 +272,10 @@ class DataloggerLogParser:
         link all X axes and some Y axes
         '''
         # X axis
-        all_items = self.view._target
-        for i, p in enumerate(all_items):
-            if i != 0:
-                p.setXLink(target_item)
-            else:
-                p.enableAutoRange()
+        self.view.connect_all_x_axes()
         # Y axis
-        for cur_row_dict in self.view.ci.rows.values():
-            all_items = cur_row_dict.values()
+        for cur_row in self.view[:]:
+            all_items = cur_row
             target_item = all_items[0]
             title = target_item.titleLabel.text
             if title.find("joint_angle") == -1 and title.find("_force") == -1 and title != "imu" and title.find("comp") == -1:
@@ -288,9 +291,11 @@ class DataloggerLogParser:
         '''
         customize right-click context menu
         '''
-        self.plotItemOrig = self.view.ci.items.copy()
-        all_items = self.view.ci.items.keys()
-        for pi in all_items:
+        self.plotItemOrig = self.view.origin().ci.items.copy()
+        # all_items = self.view.origin().ci.items.keys()
+        # for pi in all_items:
+        for item in self.view:
+            pi = item.origin()
             vb = pi.getViewBox()
             hm = vb.menu.addMenu('Hide')
             qa1 = hm.addAction('hide this plot')
@@ -301,49 +306,49 @@ class DataloggerLogParser:
             qa6 = hm.addAction('hide except this row')
             qa7 = hm.addAction('hide except this colmn')
             def hideCB(item):
-                self.view.ci.removeItem(item)
+                self.view.origin().ci.removeItem(item)
             def hideRowCB(item):
-                r, _c = self.view.ci.items[item][0]
-                del_list = [self.view.ci.rows[r][c] for c in self.view.ci.rows[r].keys()]
+                r, _c = self.view.origin().ci.items[item][0]
+                del_list = [self.view.origin().ci.rows[r][c] for c in self.view.origin().ci.rows[r].keys()]
                 for i in del_list:
-                    self.view.ci.removeItem(i)
+                    self.view.origin().ci.removeItem(i)
             def hideColCB(item):
-                _r, c = self.view.ci.items[item][0]
+                _r, c = self.view.origin().ci.items[item][0]
                 del_list = []
-                row_num = len(self.view.ci.rows)
+                row_num = len(self.view.origin().ci.rows)
                 for r in range(row_num):
-                    if c in self.view.ci.rows[r].keys():
-                        del_list.append(self.view.ci.rows[r][c])
+                    if c in self.view.origin().ci.rows[r].keys():
+                        del_list.append(self.view.origin().ci.rows[r][c])
                 for i in del_list:
-                    self.view.ci.removeItem(i)
+                    self.view.origin().ci.removeItem(i)
             def hideExcCB(item):
-                del_list = self.view.ci.items.keys()
+                del_list = self.view.origin().ci.items.keys()
                 del_list.remove(item)
                 for i in del_list:
-                    self.view.ci.removeItem(i)
+                    self.view.origin().ci.removeItem(i)
             def hideExcRowCB(item):
-                del_list = self.view.ci.items.keys()
-                r, _c = self.view.ci.items[item][0]
-                not_del_list=[self.view.ci.rows[r][c] for c in self.view.ci.rows[r].keys()]
+                del_list = self.view.origin().ci.items.keys()
+                r, _c = self.view.origin().ci.items[item][0]
+                not_del_list=[self.view.origin().ci.rows[r][c] for c in self.view.origin().ci.rows[r].keys()]
                 for i in del_list:
                     if i in not_del_list:
                         del_list.remove(i)
                 for i in del_list:
-                    self.view.ci.removeItem(i)
+                    self.view.origin().ci.removeItem(i)
             def hideExcColumnCB(item):
-                del_list = self.view.ci.items.keys()
-                _r, c = self.view.ci.items[item][0]
-                not_del_list=[self.view.ci.rows[r][c] for r in range(len(a.view.ci.rows))]
+                del_list = self.view.origin().ci.items.keys()
+                _r, c = self.view.origin().ci.items[item][0]
+                not_del_list=[self.view.origin().ci.rows[r][c] for r in range(len(a.view.origin().ci.rows))]
                 for i in del_list:
                     if i in not_del_list:
                         del_list.remove(i)
                 for i in del_list:
-                    self.view.ci.removeItem(i)
+                    self.view.origin().ci.removeItem(i)
             def restoreCB():
-                self.view.ci.clear()
+                self.view.origin().ci.clear()
                 for key in self.plotItemOrig:
                     r, c = self.plotItemOrig[key][0]
-                    self.view.ci.addItem(key, row=r, col=c)
+                    self.view.origin().ci.addItem(key, row=r, col=c)
             qa1.triggered.connect(functools.partial(hideCB, pi))
             qa2.triggered.connect(functools.partial(hideRowCB, pi))
             qa3.triggered.connect(functools.partial(hideColCB, pi))
@@ -365,9 +370,10 @@ class DataloggerLogParser:
         self.readData()
         self.setLayout()
         self.plotData()
-        # self.setLabel()
-        # self.linkAxes()
-        # self.customMenu()
+        self.setLabel()
+        if self.view.__class__ == PyQtGraphLayout:
+            self.linkAxes()
+            self.customMenu()
         self.view.showMaximized()
 
 if __name__ == '__main__':
@@ -377,11 +383,12 @@ if __name__ == '__main__':
     parser.add_argument('--plot', type=str, help='plot configure file', metavar='file', required=True)
     parser.add_argument('--layout', type=str, help='layout configure file', metavar='file', required=True)
     parser.add_argument('-t', type=str, help='title', default=None)
+    parser.add_argument('--lib', type=str, help='matplotlib/pyqtgraph', choices=['pyqtgraph', 'matplotlib'], default='pyqtgraph')
     parser.set_defaults(feature=False)
     args = parser.parse_args()
     # main
     app = pyqtgraph.Qt.QtGui.QApplication([])
-    a = DataloggerLogParser(args.f, args.plot, args.layout, args.t)
+    a = DataloggerLogParser(args.f, args.plot, args.layout, args.t, lib = args.lib)
     a.main()
     pyqtgraph.Qt.QtGui.QApplication.instance().exec_()
 
