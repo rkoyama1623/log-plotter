@@ -256,6 +256,13 @@ class DataloggerLogParser:
                     if i != 0:
                         p.setYLink(target_item)
 
+        # design
+        for i, p in enumerate(self.view.ci.items.keys()):
+            ax = p.getAxis('bottom')
+            ax.setPen(pyqtgraph.mkPen('k', width=1))
+            ax = p.getAxis('left')
+            ax.setPen(pyqtgraph.mkPen('k', width=1))
+
     @my_time
     def customMenu(self):
         '''
