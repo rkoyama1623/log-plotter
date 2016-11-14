@@ -329,3 +329,9 @@ epub_exclude_files = ['search.html']
 
 # If false, no index is generated.
 #epub_use_index = True
+
+# show private members
+# autodoc_default_flags = [
+#     'members',
+#     'private-members'
+# ]

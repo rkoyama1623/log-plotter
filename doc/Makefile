@@ -1,10 +1,10 @@
-PROJECT_NAME = 'log-plotter'
+PROJECT_NAME = 'log-plotter API'
 SRC_PATH = ../
 
 all: api.update _build/html/index.html
 _build/html/index.html: html
 api.update: *.rst conf.py
-	sphinx-apidoc -F -o ./ $(SRC_PATH) -H $(PROJECT_NAME)
+	sphinx-apidoc -H $(PROJECT_NAME) -o ./api_doc $(SRC_PATH)
 %.rst: $(SRC_PATH)/%.py
 	if [ -e $@ ]; then rm $@; fi
 	touch api.update
@@ -12,5 +12,5 @@ api.update: *.rst conf.py
 
 include Makefile.sphinx
 clean::
-	rm *.rst
+	rm api_doc/*.rst
 	rm api.update
