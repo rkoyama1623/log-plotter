@@ -62,7 +62,7 @@ def LegendItem_updateSize(self):
         #print(width, height)
     #print width, height
     # self.setGeometry(0, 0, width+25, height)
-    self.setGeometry(0, 0, width+50, height)
+    self.setGeometry(0, 0, width+35, height)
 
 # justify left for legend label
 from pyqtgraph.graphicsItems.LabelItem import LabelItem
