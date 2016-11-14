@@ -12,7 +12,9 @@ except:
 
 class PlotMethod(object):
     urata_len = 16
-    color_list = pyqtgraph.functions.Colors.keys()
+    # color_list = pyqtgraph.functions.Colors.keys()
+    #            = ['c', 'b', 'd', 'g', 'k', 'm', 'l', 's', 'r', 'w', 'y']
+    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w', 'd','l', 's']
 
     @staticmethod
     def __plot_urata_servo(plot_item, times, data_dict, logs, log_cols, cur_col, key, i, offset1, offset2=1):
