@@ -6,8 +6,8 @@ from pyqtgraph.graphicsItems.ScatterPlotItem import ScatterPlotItem, drawSymbol
 
 # set legend forefround white
 def white_foreground_legend_item_paint(legend_item, p, *args):
-    p.setPen(fn.mkPen(0,0,0,100))
-    p.setBrush(fn.mkBrush(255,255,255,50))
+    p.setPen(fn.mkPen(0,0,0,255, width = 1)) # r,g,b,alpha
+    p.setBrush(fn.mkBrush(255,255,255,255))
     p.drawRect(legend_item.boundingRect())
 
 # set legend, ItemSample horizontal
@@ -67,7 +67,7 @@ def LegendItem_updateSize(self):
 # justify left for legend label
 from pyqtgraph.graphicsItems.LabelItem import LabelItem
 def LegendItem_addItem(self, item, name):
-    label = LabelItem(name, justify='left')
+    label = LabelItem(name, justify='left', color='000000')
     if isinstance(item, pyqtgraph.graphicsItems.LegendItem.ItemSample):
         sample = item
     else:
