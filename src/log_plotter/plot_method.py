@@ -79,7 +79,7 @@ class PlotMethod(object):
     def plot_rad2deg(plot_item, times, data_dict, logs, log_cols, cur_col, key, i):
         data_rad=data_dict[logs[0]][:, log_cols[0]]
         data_deg=[math.degrees(x) for x in data_rad]
-        plot_item.plot(times, data_deg,pen=pyqtgraph.mkPen(PlotMethod.color_list[i], width=(len(logs)-i+3)), name=logs[0])
+        plot_item.plot(times, data_deg,pen=pyqtgraph.mkPen(PlotMethod.color_list[i], width=(len(logs)-0.2*i+2)), name=logs[0])
 
     @staticmethod
     def plot_watt(plot_item, times, data_dict, logs, log_cols, cur_col, key, i):
