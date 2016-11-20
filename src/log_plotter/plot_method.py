@@ -137,3 +137,43 @@ class PlotMethod(object):
     @staticmethod
     def normal(plot_item, times, data_dict, logs, log_cols, cur_col, key, i):
         plot_item.plot(times, data_dict[logs[0]][:, log_cols[0]], pen=pyqtgraph.mkPen(PlotMethod.linetypes["color"][i], width=2, style=PlotMethod.linetypes["style"][i]), name=key)
+
+    @staticmethod
+    def plot_force_in_foot_mid_coords(plot_item, times, data_dict, logs, log_cols, cur_col, key, i):
+        sensor_log_name = logs[0]
+        q_log_name = logs[1]
+        output_key_name = '{}_world'.format(sensor_log_name) # rmfo_off_lhsensor_world
+        generate_world_sensor_by_fk(data_dict, sensor_log_name, q_log_name, output_key_name)
+        data = data_dict[output_key_name][:, log_cols[0]]
+        plot_item.plot(times, data_dict[output_key_name][:, log_cols[0]], pen=pyqtgraph.mkPen(PlotMethod.color_list[i], width=2), name=key)
+
+def generate_world_sensor_by_fk(data_dict, sensor_log_name, q_log_name, output_key_name=None):
+    '''
+    :param dict data_dict: ex. {st_q: [[...], [...], ...]}
+    :param str sensor_name: ex. rmfo_off_rhsensor
+    :param str q_log_name: ex. st_q
+    :param str output_key_name: ex. rmfo_off_rhsensor_world
+    '''
+    if output_key_name is None:
+        output_key_name = '{}_world'.format(sensor_log_name)
+    import cnoidpy
+    from cnoidpy.coordinate import coordinate
+    forces = data_dict[sensor_log_name][:, 0:6]
+    angle_vectors = data_dict[q_log_name][:, :]
+    robot = cnoidpy.hrp2jsknt.instance()
+    for sensor_name in ['rhsensor', 'lhsensor', 'rfsensor', 'lfsensor']:
+        if sensor_name in sensor_log_name:
+            sensor = robot.getDevice(sensor_name)
+    if not data_dict.has_key(output_key_name):
+        tmp_forces = numpy.zeros(forces.shape)
+        for row_idx, (f, av) in enumerate(zip(forces, angle_vectors)):
+            robot.angleVector(av)
+            robot.calcForwardKinematics()
+            fmc = robot.footMidCoords()
+            ff = f[0:3]
+            fm = f[3:6]
+            f_world = fmc.inverseRotateVector(coordinate(sensor.position()).rotateVector(ff))
+            m_world = fmc.inverseRotateVector(coordinate(sensor.position()).rotateVector(fm))
+            tmp_forces[row_idx] = numpy.r_[f_world, m_world]
+        data_dict[output_key_name] = tmp_forces
+

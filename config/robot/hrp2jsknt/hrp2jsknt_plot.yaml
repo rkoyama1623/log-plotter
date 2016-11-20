@@ -110,3 +110,10 @@ st_zmp:
 #   data:
 #     - { log: RobotHardware0_servoState, column: [0,1,2,3,4,5] }
 
+# following key use cnoid
+rmfo_off_lhsensor_world:
+  func: plot_force_in_foot_mid_coords
+  data:
+    - { log: rmfo_off_lhsensor, column: [0-5] }
+    - { log: st_q, column: [0-100] } # dummy to specify st_q
+
