@@ -117,3 +117,11 @@ rmfo_off_lhsensor_world:
     - { log: rmfo_off_lhsensor, column: [0-5] }
     - { log: st_q, column: [0-100] } # dummy to specify st_q
 
+
+estimated_static_balance_point:
+  func: plot_estimated_static_balance_point
+  data:
+    - { log: st_zmp, column: [0,1] }
+    - { log: rmfo_off_lhsensor, column: [0-5] }
+    - { log: rmfo_off_rhsensor, column: [0-5] }
+    - { log: st_q, column: [0-100] } # dummy to specify st_q

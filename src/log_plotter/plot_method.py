@@ -147,6 +147,15 @@ class PlotMethod(object):
         data = data_dict[output_key_name][:, log_cols[0]]
         plot_item.plot(times, data_dict[output_key_name][:, log_cols[0]], pen=pyqtgraph.mkPen(PlotMethod.color_list[i], width=2), name=key)
 
+    @staticmethod
+    def plot_estimated_static_balance_point(plot_item, times, data_dict, logs, log_cols, cur_col, key, i):
+        zmp_name, lhsensor_name, rhsensor_name, q_name = logs
+        generate_world_sensor_by_fk(data_dict, lhsensor_name, q_name)
+        generate_world_sensor_by_fk(data_dict, rhsensor_name, q_name)
+        lhforces = data_dict['{}_world'.format(lhsensor_name)]
+        rhforces = data_dict['{}_world'.format(rhsensor_name)]
+        q = data_dict[q_name]
+
 def generate_world_sensor_by_fk(data_dict, sensor_log_name, q_log_name, output_key_name=None):
     '''
     :param dict data_dict: ex. {st_q: [[...], [...], ...]}
