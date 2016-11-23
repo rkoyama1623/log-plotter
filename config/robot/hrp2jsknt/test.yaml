@@ -129,6 +129,11 @@ rmfo_off_lhsensor_world:
     - { log: rmfo_off_lhsensor, column: [0-5] }
     - { log: st_q, column: [0-100] } # dummy to specify st_q
 
+rmfo_off_rhsensor_world:
+  func: plot_force_in_foot_mid_coords
+  data:
+    - { log: rmfo_off_rhsensor, column: [0-5] }
+    - { log: st_q, column: [0-100] } # dummy to specify st_q
 
 estimated_static_balance_point:
   func: plot_estimated_static_balance_point
@@ -137,3 +142,4 @@ estimated_static_balance_point:
     - { log: rmfo_off_lhsensor, column: [0-5] }
     - { log: rmfo_off_rhsensor, column: [0-5] }
     - { log: st_q, column: [0-100] } # dummy to specify st_q
+    - { log: st_originRefCog, column: [0-2] }

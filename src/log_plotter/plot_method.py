@@ -136,12 +136,9 @@ class PlotMethod(object):
 
     @staticmethod
     def plot_estimated_static_balance_point(plot_item, times, data_dict, logs, log_cols, cur_col, key, i):
-        zmp_name, lhsensor_name, rhsensor_name, q_name = logs
-        generate_world_sensor_by_fk(data_dict, lhsensor_name, q_name)
-        generate_world_sensor_by_fk(data_dict, rhsensor_name, q_name)
-        lhforces = data_dict['{}_world'.format(lhsensor_name)]
-        rhforces = data_dict['{}_world'.format(rhsensor_name)]
-        q = data_dict[q_name]
+        zmp_name, lhsensor_name, rhsensor_name, q_name, cog_name = logs
+        generate_estimated_static_balance_point(data_dict, zmp_name, lhsensor_name, rhsensor_name, q_name, cog_name ,output_key_name='sbp')
+        plot_item.plot(times, data_dict['sbp'][:, log_cols[0]], pen=pyqtgraph.mkPen(PlotMethod.color_list[i], width=2), name=key)
 
 def generate_world_sensor_by_fk(data_dict, sensor_log_name, q_log_name, output_key_name=None):
     '''
@@ -161,15 +158,83 @@ def generate_world_sensor_by_fk(data_dict, sensor_log_name, q_log_name, output_k
         if sensor_name in sensor_log_name:
             sensor = robot.getDevice(sensor_name)
     if not data_dict.has_key(output_key_name):
-        tmp_forces = numpy.zeros(forces.shape)
+        tmp_forces = []
+        force_coords = coordinate()
+        sensor_coords = coordinate()
         for row_idx, (f, av) in enumerate(zip(forces, angle_vectors)):
             robot.angleVector(av)
             robot.calcForwardKinematics()
             fmc = robot.footMidCoords()
             ff = f[0:3]
             fm = f[3:6]
-            f_world = fmc.inverseRotateVector(coordinate(sensor.position()).rotateVector(ff))
-            m_world = fmc.inverseRotateVector(coordinate(sensor.position()).rotateVector(fm))
-            tmp_forces[row_idx] = numpy.r_[f_world, m_world]
-        data_dict[output_key_name] = tmp_forces
+            sensor_coords.__init__(sensor.position())
+            f_world = fmc.inverseRotateVector(sensor_coords.rotateVector(ff))
+            m_world = fmc.inverseRotateVector(sensor_coords.rotateVector(fm))
+            tmp_forces.append(numpy.r_[f_world, m_world])
+        data_dict[output_key_name] = numpy.array(tmp_forces)
+        print data_dict
+
+import scipy.constants
+def generate_estimated_static_balance_point(data_dict, zmp_name, lhsensor_name, rhsensor_name, q_name, cog_name ,output_key_name=None):
+    print 'generate_estimated_static_balance_point'
+    import cnoidpy
+    from cnoidpy.coordinate import coordinate
+    if output_key_name is None:
+        output_key_name = 'static balance point'
+
+    generate_world_sensor_by_fk(data_dict, lhsensor_name, q_name)
+    generate_world_sensor_by_fk(data_dict, rhsensor_name, q_name)
+    lhforces = data_dict['{}_world'.format(lhsensor_name)]
+    rhforces = data_dict['{}_world'.format(rhsensor_name)]
+    qs = data_dict[q_name]
+    cogs = data_dict[cog_name]
+
+    robot = cnoidpy.hrp2jsknt.instance()
+    lhsensor = robot.getDevice('lhsensor')
+    rhsensor = robot.getDevice('rhsensor')
+
+    if data_dict.has_key(output_key_name):
+        return
+    estimated_static_balance_point = []
+    for i,_ in enumerate(qs):
+        lhforce = lhforces[i]
+        rhforce = rhforces[i]
+        q = qs[i]
+        cog = cogs[i]
+
+        # stand on [0,0,0]
+        robot.angleVector(q)
+        robot.calcForwardKinematics()
+        robot.fixLegToCoords(coordinate())
+        robot.calcForwardKinematics()
+
+        # hand pos
+        lh_pos = lhsensor.position()[0:3,3]
+        rh_pos = rhsensor.position()[0:3,3]
+        m = robot.mass()
+        g = scipy.constants.g
+
+        # static balance point
+        sbp_diff = static_balance_point_diff(m, cog, lhforce, lh_pos) + static_balance_point_diff(m, cog, rhforce, rh_pos)
+        sbp = cog[0:2] + sbp_diff
+        estimated_static_balance_point.append(sbp)
+    data_dict[output_key_name] = numpy.array(estimated_static_balance_point)
+
+def static_balance_point_diff(m, m_pos, f, f_pos):
+    g = scipy.constants.g
+    x = (m*m_pos[0]*g)/(m*g-f[2]) - (f_pos[0]*f[2]-f_pos[2]*f[0])/(m*g-f[2])
+    y = (m*m_pos[1]*g)/(m*g-f[2]) - (f_pos[1]*f[2]-f_pos[2]*f[1])/(m*g-f[2])
+    return numpy.array([x,y]) - m_pos[0:2]
+
+
+
+
+
+
+
+
+
+
+
+
 
