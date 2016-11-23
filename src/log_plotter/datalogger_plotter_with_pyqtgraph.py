@@ -17,6 +17,7 @@ import log_plotter.plot_method as plot_method
 from log_plotter.graph_legend import GraphLegendInfo, expand_str_to_list
 import log_plotter.yaml_selector as yaml_selector
 import log_plotter.graph_arrange as graph_arrange
+import log_plotter.graph_ctrl as graph_ctrl
 
 try:
     import pyqtgraph
@@ -332,6 +333,23 @@ class DataloggerLogParser:
             qa6.triggered.connect(functools.partial(hideExcRowCB, pi))
             qa7.triggered.connect(functools.partial(hideExcColumnCB, pi))
 
+    @my_time
+    def customMenu2(self):
+        '''
+        customize right-click context menu
+        '''
+        for pi in self.view.ci.items.keys():
+            vb = pi.getViewBox()
+            tool_menu = vb.menu.addMenu('Tool')
+            offset_menu = tool_menu.addMenu('set offset')
+            w = graph_ctrl.GraphOffset()
+            for c in pi.curves:
+                w.add_curve(c)
+            w.update()
+            a = pyqtgraph.QtGui.QWidgetAction(offset_menu)
+            a.setDefaultWidget(w)
+            offset_menu.addAction(a)
+
     def main(self):
         '''
         1. read log files
@@ -348,6 +366,7 @@ class DataloggerLogParser:
         self.setLabel()
         self.linkAxes()
         self.customMenu()
+        self.customMenu2()
         self.view.showMaximized()
 
 def main():
