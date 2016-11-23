@@ -1,0 +1,33 @@
+# - title: joint_angle(larm)
+#   legends:
+#     - { key: sh_qOut, id: [26-33] }
+#     - { key: abc_q, id: [26-33] }
+#     - { key: st_q, id: [26-33] }
+#     - { key: RobotHardware0_q, id: [26-33] }
+
+# - title: right_foot_force # something bad
+#   legends:
+#     - { key: rmfo_off_rfsensor, id: [0-5] }
+#     - { key: sh_rfsensorOut, id: [0-5] }
+#     - { key: RobotHardware0_rfsensor, id: [0-5] }
+
+- title: ZMP
+  legends:
+    - { key: st_zmp, id: [0,1] }
+    - { key: estimated_static_balance_point, id: [0,1] }
+
+- title: larm off_force (in world)
+  legends:
+    - { key: rmfo_off_lhsensor_world, id: [2], label: 'fz (world)'}
+  newline: False
+
+- title: larm off_force (in world)
+  legends:
+    - { key: rmfo_off_lhsensor_world, id: [2], label: 'fz (world)'}
+
+
+- title: abc_cogOut
+  legends:
+    - { key: abc_cogOut, id: [0-2]}
+    - { key: st_originActCog, id: [0-2]}
+    - { key: st_originRefCog, id: [0-2]}
