@@ -341,6 +341,7 @@ class DataloggerLogParser:
         for pi in self.view.ci.items.keys():
             vb = pi.getViewBox()
             tool_menu = vb.menu.addMenu('Tool')
+            # slide tool
             offset_menu = tool_menu.addMenu('set offset')
             w = graph_ctrl.GraphOffset()
             for c in pi.curves:
@@ -349,7 +350,12 @@ class DataloggerLogParser:
             a = pyqtgraph.QtGui.QWidgetAction(offset_menu)
             a.setDefaultWidget(w)
             offset_menu.addAction(a)
-
+            # graph size tool
+            size_menu = tool_menu.addMenu('graph size')
+            size_widget = graph_ctrl.GraphSize(pi, self.view)
+            size_action = pyqtgraph.QtGui.QWidgetAction(size_menu)
+            size_action.setDefaultWidget(size_widget)
+            size_menu.addAction(size_action)
     def main(self):
         '''
         1. read log files
