@@ -326,6 +326,15 @@ class LogPlotter(object):
             size_action = pyqtgraph.QtGui.QWidgetAction(size_menu)
             size_action.setDefaultWidget(size_widget)
             size_menu.addAction(size_action)
+            # slide tool
+            offset_menu = tool_menu.addMenu('set offset')
+            w = graph_tools.GraphOffset()
+            for c in pi.curves:
+                w.add_curve(c)
+            w.update()
+            a = pyqtgraph.QtGui.QWidgetAction(offset_menu)
+            a.setDefaultWidget(w)
+            offset_menu.addAction(a)
 
     def main(self):
         '''
