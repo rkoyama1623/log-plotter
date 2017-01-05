@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+from xml.etree import ElementTree
+import os
+
+VERSION=ElementTree.parse("package.xml").getroot().find("version").text
+SCRIPTDIR = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(SCRIPTDIR, "src/log_plotter/version.py"),"w") as version_py:
+    version_py.writelines("# THIS FILE IS GENERATED FROM NUMPY SETUP.PY\n")
+    version_py.writelines("version='{}'".format(VERSION))
 
 try: # install in catkin work space
     from distutils.core import setup
@@ -15,7 +23,7 @@ except: # install in /usr/local/
     from setuptools import setup, find_packages
     from os.path import join
     setup(name='log_plotter',
-          version='0.0.0',
+          version=VERSION,
           description='log plotter for hrpsys',
           packages=[join('src', package) for package in find_packages(where='./src/')],
           entry_points="""
