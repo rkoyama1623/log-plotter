@@ -8,6 +8,7 @@ try: # install in catkin work space
         packages=['log_plotter'],
         package_dir={'': 'src'},
         scripts=['src/log_plotter/datalogger_plotter_with_pyqtgraph.py'],
+        install_requires=['pyqtgraph','metayaml'],
     )
     setup(**d)
 except: # install in /usr/local/
